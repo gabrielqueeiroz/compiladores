@@ -1,0 +1,102 @@
+%{
+#include <stdio.h>
+
+void yyerror(char *s);
+int yylex(void);
+int yyparse();
+%}
+
+%token NAME ALL COMMA DOT END EOL
+%token SELECT WHERE FROM OPERATOR STRING NUMBER EQUALS SET UPDATE DELETE INSERT INTO VALUES
+%token P_LEFT P_RIGHT
+
+%left P_LEFT P_RIGHT
+
+%%
+QUERRY:
+    SELECT_EXP END EOL{YYACCEPT;}
+    |   SELECT_EXP WHERE_EXP END EOL{YYACCEPT;}
+    |   UPDATE_EXP END EOL{YYACCEPT;}
+    |   DELETE_EXP END EOL{YYACCEPT;}
+    |   INSERT_EXP END EOL{YYACCEPT;}
+    ;
+
+INSERT_EXP:
+    INSERT INTO NAME EXP_PARENTHESIS VALUES VALUES_PARENTHESIS
+    | INSERT INTO NAME VALUES VALUES_PARENTHESIS
+    ;
+
+DELETE_EXP:
+    DELETE FROM NAME
+    |   DELETE FROM NAME WHERE_EXP
+    ;
+
+UPDATE_EXP:
+    UPDATE EXP_LIST SET SET_EXP_LIST WHERE_EXP
+    ;
+
+WHERE_EXP:
+    WHERE NAME OPERATOR STRING
+    |   WHERE NAME OPERATOR NUMBER
+    |   WHERE NAME EQUALS STRING
+    |   WHERE NAME EQUALS NUMBER
+    ;
+
+SELECT_EXP:
+    SELECT EXP_LIST FROM EXP
+    |   SELECT ALL FROM EXP
+    ;
+
+VALUES_PARENTHESIS:
+    P_LEFT VALUE_LIST P_RIGHT
+    ;
+
+EXP_PARENTHESIS:
+    P_LEFT EXP_LIST P_RIGHT
+    ;
+
+VALUE_LIST:
+    STRING COMMA STRING
+    | STRING COMMA NUMBER
+    | NUMBER COMMA STRING
+    | NUMBER COMMA NUMBER
+    | VALUE_LIST COMMA STRING
+    | VALUE_LIST COMMA NUMBER
+    ;
+
+EXP_LIST:
+    EXP
+    |   EXP_LIST COMMA EXP
+    ;
+
+SET_EXP_LIST:
+    SET_EXP
+    |   SET_EXP COMMA SET_EXP
+    ;
+
+SET_EXP:
+    EXP EQUALS STRING
+    |   EXP EQUALS NUMBER
+    ;
+
+EXP:
+    NAME
+    | NAME DOT NAME
+    ;
+
+%%
+
+void yyerror(char *s)
+{
+	printf("Error: %s\n", s);
+}
+
+int main(int argc, char *argv[])
+{
+	int result;
+    result = yyparse();
+    if (result == 0){
+        printf("Correct\n");
+    }
+	return 0;
+}
